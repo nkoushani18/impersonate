@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PentaAI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Traffic Lights -->
+            <header class="sidebar-header">
+                <div class="traffic-lights">
+                    <div class="traffic-light close"></div>
+                    <div class="traffic-light minimize"></div>
+                    <div class="traffic-light maximize"></div>
+                </div>
+                <span class="window-title">PentaAI</span>
+            </header>
+
+            <!-- Logo -->
+            <div class="logo">
+                <div class="logo-icon">🧠</div>
+                <div class="logo-text">
+                    <h1>PentaAI</h1>
+                    <span>Persona Intelligence</span>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <span>🔍</span>
+                <span>Search personas...</span>
+            </div>
+
+            <!-- Personas -->
+            <div class="persona-section">
+                <div class="section-title">Conversations</div>
+                <div class="persona-list" id="persona-list"></div>
+            </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <main class="chat-area">
+            <header class="chat-header" id="chat-header" style="display: none;">
+                <div class="header-avatar" id="header-avatar">??</div>
+                <div class="header-info">
+                    <h2 id="header-name">Select Persona</h2>
+                    <div class="status">
+                        <div class="status-dot"></div>
+                        <span>Online</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-clear" onclick="clearChat()">Clear</button>
+                </div>
+            </header>
+
+            <div class="messages-container" id="messages">
+                <div class="landing-page">
+                    <div class="landing-hero">
+                        <div class="hero-badge">✨ AI-Powered</div>
+                        <h1 class="hero-title">Meet Your <span class="gradient-text">Personas</span></h1>
+                        <p class="hero-subtitle">Chat with unique AI personalities, each with their own traits, values,
+                            and perspectives. Select a persona from the sidebar to begin.</p>
+                    </div>
+
+                    <div class="feature-cards">
+                        <div class="feature-card">
+                            <div class="feature-icon">🧠</div>
+                            <h3>Unique Personalities</h3>
+                            <p>Each persona has distinct traits based on real survey data</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">💬</div>
+                            <h3>Natural Conversations</h3>
+                            <p>Get authentic, human-like responses powered by AI</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🎯</div>
+                            <h3>Ask Anything</h3>
+                            <p>Career, relationships, values - explore their perspectives</p>
+                        </div>
+                    </div>
+
+                    <div class="landing-cta">
+                        <span class="cta-arrow">←</span>
+                        <span>Select a persona to start chatting</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area" id="input-area" style="display: none;">
+                <div class="input-box">
+                    <input type="text" id="input" placeholder="Message..." disabled>
+                    <button class="btn-send" id="btn-send" onclick="send()" disabled>↑</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentPersona = null;
+        let chats = {};
+        let allPersonas = [];
+
+        const $list = document.getElementById('persona-list');
+        const $messages = document.getElementById('messages');
+        const $input = document.getElementById('input');
+        const $send = document.getElementById('btn-send');
+        const $header = document.getElementById('chat-header');
+        const $headerName = document.getElementById('header-name');
+        const $headerAvatar = document.getElementById('header-avatar');
+
+        document.addEventListener('DOMContentLoaded', init);
+
+        async function init() {
+            try {
+                const res = await fetch('/api/personas');
+                const data = await res.json();
+                allPersonas = data.personas || [];
+                renderPersonaList();
+            } catch (e) {
+                console.error('Failed to load:', e);
+            }
+        }
+
+        function renderPersonaList() {
+            $list.innerHTML = allPersonas.map(p => `
+                <div class="persona-card ${currentPersona?.id === p.id ? 'active' : ''}" data-id="${p.id}" data-name="${esc(p.name)}">
+                    <div class="persona-avatar">${initials(p.name)}</div>
+                    <div class="persona-info">
+                        <h3>${esc(p.name)}</h3>
+                        <span>${Object.keys(p.traits || {}).length} traits</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.persona-card').forEach(card => {
+                card.onclick = () => selectPersona(card.dataset.id, card.dataset.name);
+            });
+        }
+
+        async function selectPersona(id, name) {
+            try {
+                const res = await fetch('/api/persona/select', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ persona_id: id })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentPersona = { id, name };
+
+                    // Save to localStorage for auto-select in other interfaces
+                    localStorage.setItem('activePersonaId', id);
+
+                    // Apply persona-specific theme
+                    applyPersonaTheme(name);
+
+                    $header.style.display = 'flex';
+                    $headerName.textContent = name;
+                    $headerAvatar.textContent = initials(name);
+
+                    // Show input area
+                    document.getElementById('input-area').style.display = 'block';
+                    $input.disabled = false;
+                    $input.placeholder = `Message ${name}...`;
+                    $send.disabled = false;
+
+                    document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('active'));
+                    document.querySelector(`[data-id="${id}"]`)?.classList.add('active');
+
+                    if (!chats[id]) chats[id] = [];
+                    renderChat();
+                    $input.focus();
+                }
+            } catch (e) {
+                console.error('Select failed:', e);
+            }
+        }
+
+        function renderChat() {
+            const msgs = chats[currentPersona?.id] || [];
+
+            if (msgs.length === 0) {
+                $messages.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💬</div>
+                        <h2>Chat with ${esc(currentPersona?.name)}</h2>
+                        <p>Ask about career, relationships, or life choices.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            $messages.innerHTML = msgs.map(m => `
+                <div class="message ${m.role}">
+                    <div class="msg-avatar">${m.role === 'user' ? '👤' : '🧠'}</div>
+                    <div class="msg-content">
+                        <div class="msg-bubble">${esc(m.text)}</div>
+                        <span class="msg-time">${m.time}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            $messages.scrollTop = $messages.scrollHeight;
+        }
+
+        async function send() {
+            const text = $input.value.trim();
+            if (!text || !currentPersona) return;
+
+            $input.value = '';
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            chats[currentPersona.id].push({ role: 'user', text, time });
+            renderChat();
+            showTyping();
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                hideTyping();
+
+                chats[currentPersona.id].push({
+                    role: 'ai',
+                    text: data.response || 'No response',
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
+                renderChat();
+            } catch (e) {
+                hideTyping();
+                console.error('Error:', e);
+            }
+        }
+
+        function showTyping() {
+            $messages.insertAdjacentHTML('beforeend', `
+                <div class="message ai" id="typing">
+                    <div class="msg-avatar">🧠</div>
+                    <div class="typing"><span></span><span></span><span></span></div>
+                </div>
+            `);
+            $messages.scrollTop = $messages.scrollHeight;
+        }
+
+        function hideTyping() {
+            document.getElementById('typing')?.remove();
+        }
+
+        function clearChat() {
+            if (currentPersona) {
+                chats[currentPersona.id] = [];
+                renderChat();
+            }
+        }
+
+        $input.onkeydown = e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+            }
+        };
+
+        function initials(name) {
+            return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
+        }
+
+        function esc(s) {
+            if (!s) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        // Persona-specific color themes
+        const personaThemes = {
+            'koushani': {
+                primary: '#ec4899',      // Pink
+                gradient: 'linear-gradient(135deg, #ec4899, #f472b6)',
+                glow: 'rgba(236, 72, 153, 0.3)'
+            },
+            'manya': {
+                primary: '#f97316',      // Light red/coral
+                gradient: 'linear-gradient(135deg, #f97316, #fb923c)',
+                glow: 'rgba(249, 115, 22, 0.3)'
+            },
+            'rishit': {
+                primary: '#6366f1',      // Soft Indigo Blue
+                gradient: 'linear-gradient(135deg, #6366f1, #818cf8)',
+                glow: 'rgba(99, 102, 241, 0.3)'
+            },
+            'harshv': {
+                primary: '#8b5cf6',      // Purple
+                gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)',
+                glow: 'rgba(139, 92, 246, 0.3)'
+            },
+            'salil': {
+                primary: '#64748b',      // Muted Slate
+                gradient: 'linear-gradient(135deg, #64748b, #94a3b8)',
+                glow: 'rgba(100, 116, 139, 0.3)'
+            },
+            'default': {
+                primary: '#ff9900',      // Orange (default)
+                gradient: 'linear-gradient(135deg, #ff9900, #ffb347)',
+                glow: 'rgba(255, 153, 0, 0.3)'
+            }
+        };
+
+        function applyPersonaTheme(name) {
+            const key = name.toLowerCase().split(' ')[0]; // Get first name
+            const theme = personaThemes[key] || personaThemes['default'];
+
+            document.documentElement.style.setProperty('--orange', theme.primary);
+            document.documentElement.style.setProperty('--gradient-primary', theme.gradient);
+
+            // Update avatar colors
+            document.querySelectorAll('.persona-avatar, .header-avatar, .msg-avatar, .logo-icon, .empty-icon').forEach(el => {
+                el.style.background = theme.gradient;
+                el.style.boxShadow = `0 4px 16px ${theme.glow}`;
+            });
+
+            // Update button
+            const sendBtn = document.querySelector('.btn-send');
+            if (sendBtn) {
+                sendBtn.style.background = theme.gradient;
+                sendBtn.style.boxShadow = `0 4px 16px ${theme.glow}`;
+            }
+        }
+    </script>
+</body>
+
+</html>

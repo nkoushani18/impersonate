@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Judge Results - PentaAI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        html,
+        body {
+            overflow: auto !important;
+            height: auto !important;
+        }
+
+        body {
+            background: #0f0f1a;
+            position: relative;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(120, 119, 198, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(147, 51, 234, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Minimal Header */
+        .header {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 1.4rem;
+            color: var(--cream);
+            margin: 0;
+        }
+
+        .refresh-btn {
+            background: var(--gradient-primary);
+            color: var(--dark-gray);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 16px rgba(255, 153, 0, 0.35);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(255, 153, 0, 0.45);
+        }
+
+        /* Stats Grid - Compact */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg-strong);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Comparison Matrix - Table View */
+        .matrix-container {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        .matrix-title {
+            font-size: 1.2rem;
+            color: var(--cream);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table thead {
+            background: var(--glass-bg);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .comparison-table th {
+            padding: 14px 12px;
+            text-align: left;
+            color: var(--orange);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 2px solid var(--glass-border);
+        }
+
+        .comparison-table td {
+            padding: 16px 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--glass-border-light);
+            vertical-align: top;
+        }
+
+        .comparison-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--glass-bg);
+        }
+
+        /* Score Badge */
+        .score-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .score-high {
+            background: rgba(40, 200, 64, 0.2);
+            color: var(--maximize);
+            border: 2px solid rgba(40, 200, 64, 0.4);
+        }
+
+        .score-medium {
+            background: rgba(255, 153, 0, 0.2);
+            color: var(--orange);
+            border: 2px solid rgba(255, 153, 0, 0.4);
+        }
+
+        .score-low {
+            background: rgba(255, 95, 87, 0.2);
+            color: var(--close);
+            border: 2px solid rgba(255, 95, 87, 0.4);
+        }
+
+        /* Intent Badge */
+        .intent-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .intent-yes {
+            background: rgba(40, 200, 64, 0.2);
+            color: var(--maximize);
+        }
+
+        .intent-no {
+            background: rgba(255, 95, 87, 0.2);
+            color: var(--close);
+        }
+
+        /* Breakdown Mini */
+        .breakdown-mini {
+            display: flex;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .breakdown-mini span {
+            background: var(--glass-bg);
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        /* Expandable Row */
+        .expand-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .expand-btn:hover {
+            background: var(--glass-bg-strong);
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+
+        .expanded-content {
+            padding: 20px;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .expanded-content.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detail-row {
+            margin-bottom: 16px;
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            color: var(--orange);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
+
+        .detail-content {
+            color: var(--cream);
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        /* No Data */
+        .no-data {
+            text-align: center;
+            padding: 80px 40px;
+            color: var(--text-muted);
+        }
+
+        .no-data h3 {
+            color: var(--cream);
+            margin-bottom: 12px;
+        }
+
+        /* Bottom Nav */
+        .nav-fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border-top: 1px solid var(--glass-border);
+            padding: 12px;
+            z-index: 99;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-link {
+            flex: 1;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 14px 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 24px;
+                padding-bottom: 24px;
+            }
+
+            .nav-fixed {
+                position: static;
+                background: transparent;
+                border: none;
+                backdrop-filter: none;
+                padding: 30px 0 0;
+                justify-content: center;
+            }
+
+            .nav-link {
+                flex: none;
+            }
+
+            .nav-link:hover {
+                background: var(--glass-bg-strong);
+                border-color: var(--orange);
+                color: var(--cream);
+                transform: translateY(-2px);
+            }
+        }
+
+        @media (max-width: 767px) {
+            .container {
+                padding-bottom: 80px;
+            }
+
+            .comparison-table {
+                font-size: 0.8rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Minimal Header -->
+        <div class="header">
+            <div class="header-title">
+                <span style="font-size: 1.8rem;">⚖️</span>
+                <div>
+                    <h1>Judge Results</h1>
+                    <div id="personaName" style="font-size: 0.85rem; color: var(--text-muted);"></div>
+                </div>
+            </div>
+            <button class="refresh-btn" onclick="loadResults()">🔄 Refresh</button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div id="statsSection"></div>
+
+        <!-- Comparison Matrix -->
+        <div id="matrixSection"></div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="nav-fixed">
+        <a href="/" class="nav-link">← Chat</a>
+        <a href="/human" class="nav-link">Respond →</a>
+    </div>
+
+    <script>
+        let personas = [];
+        let currentPersonaId = null;
+
+        async function loadActivePersona() {
+            try {
+                const activePersonaId = localStorage.getItem('activePersonaId');
+
+                if (!activePersonaId) {
+                    document.getElementById('matrixSection').innerHTML = `
+                        <div class="no-data">
+                            <h3>⚠️ No Active Chat</h3>
+                            <p>Please go to the <a href="/" style="color: var(--orange);">main chat</a> and select a persona first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const response = await fetch('/api/personas');
+                const data = await response.json();
+                personas = data.personas;
+
+                const activePersona = personas.find(p => p.id === activePersonaId);
+
+                if (!activePersona) {
+                    document.getElementById('matrixSection').innerHTML = `
+                        <div class="no-data">
+                            <h3>⚠️ Persona Not Found</h3>
+                            <p>Please go to the <a href="/" style="color: var(--orange);">main chat</a> and select a persona.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                currentPersonaId = activePersonaId;
+                document.getElementById('personaName').textContent = `Judging ${activePersona.name}`;
+
+                await loadResults();
+
+                // Auto-refresh every 10 seconds
+                setInterval(() => {
+                    if (currentPersonaId) {
+                        loadResults();
+                    }
+                }, 10000);
+
+            } catch (error) {
+                console.error('Failed to load active persona:', error);
+            }
+        }
+
+        async function loadResults() {
+            if (!currentPersonaId) return;
+
+            try {
+                const response = await fetch(`/api/judge/results?persona_id=${currentPersonaId}`);
+                const data = await response.json();
+
+                renderStats(data.stats);
+                renderMatrix(data.comparisons);
+
+            } catch (error) {
+                console.error('Failed to load results:', error);
+            }
+        }
+
+        function renderStats(stats) {
+            const section = document.getElementById('statsSection');
+
+            if (stats.total_comparisons === 0) {
+                section.innerHTML = '';
+                return;
+            }
+
+            section.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value">${stats.total_comparisons}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Average</div>
+                        <div class="stat-value">${Math.round(stats.average_score)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Highest</div>
+                        <div class="stat-value">${stats.highest_score}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Latest</div>
+                        <div class="stat-value">${stats.latest_score}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMatrix(comparisons) {
+            const section = document.getElementById('matrixSection');
+
+            if (!comparisons || comparisons.length === 0) {
+                section.innerHTML = `
+                    <div class="no-data">
+                        <h3>📊 No Comparisons Yet</h3>
+                        <p>Start chatting and have the human respond to see results!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const rows = comparisons.map((comp, idx) => {
+                const score = comp.judge_result.score;
+                const scoreClass = score >= 80 ? 'score-high' : score >= 50 ? 'score-medium' : 'score-low';
+                const intentClass = comp.judge_result.intent_match ? 'intent-yes' : 'intent-no';
+                const intentText = comp.judge_result.intent_match ? '✓ Yes' : '✗ No';
+
+                return `
+                    <tr>
+                        <td style="font-weight: 600; color: var(--orange);">#${comparisons.length - idx}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${comp.user_question}">${comp.user_question}</td>
+                        <td><span class="score-badge ${scoreClass}">${score}</span></td>
+                        <td><span class="intent-badge ${intentClass}">${intentText}</span></td>
+                        <td>
+                            <div class="breakdown-mini">
+                                <span title="Factual">F: ${comp.judge_result.breakdown.factual_alignment || 'N/A'}</span>
+                                <span title="Emotional">E: ${comp.judge_result.breakdown.emotional_alignment || 'N/A'}</span>
+                                <span title="Preference">P: ${comp.judge_result.breakdown.preference_alignment || 'N/A'}</span>
+                            </div>
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-muted);">${comp.timestamp}</td>
+                        <td><button class="expand-btn" onclick="toggleExpand(${comparisons.length - idx})">Details</button></td>
+                    </tr>
+                    <tr id="expanded-${comparisons.length - idx}" style="display: none;">
+                        <td colspan="7">
+                            <div class="expanded-content">
+                                <div class="detail-row">
+                                    <div class="detail-label">User Question</div>
+                                    <div class="detail-content">${comp.user_question}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">AI Response</div>
+                                    <div class="detail-content">${comp.ai_response}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Human Response</div>
+                                    <div class="detail-content">${comp.human_response}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Judge Reasoning</div>
+                                    <div class="detail-content">${comp.judge_result.reasoning}</div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            section.innerHTML = `
+                <div class="matrix-container">
+                    <div class="matrix-title">
+                        <span>📊</span> Comparison Matrix (${comparisons.length} total)
+                    </div>
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Question</th>
+                                <th>Score</th>
+                                <th>Intent</th>
+                                <th>Breakdown</th>
+                                <th>Time</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function toggleExpand(id) {
+            const row = document.getElementById(`expanded-${id}`);
+            const content = row.querySelector('.expanded-content');
+
+            if (row.style.display === 'none') {
+                row.style.display = 'table-row';
+                content.classList.add('show');
+            } else {
+                row.style.display = 'none';
+                content.classList.remove('show');
+            }
+        }
+
+        loadActivePersona();
+    </script>
+</body>
+
+</html>

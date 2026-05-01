@@ -1,0 +1,43 @@
+{
+  "Persona_ID": "Persona_4",
+  "Name": "Manya Sgarma",
+  "Traits": {
+    "Family_Priority": "Medium",
+    "Relationship_Priority": "Medium",
+    "Conflict_Handling": "Communication-based",
+    "Career_Orientation": "Visionary",
+    "Risk_Tolerance": "Medium",
+    "Future_Preference": "Growth",
+    "Decision_Style": "Reflective",
+    "Uncertainty_Response": "Optimistic",
+    "Personality_Type": "Empathetic",
+    "Emotional_Orientation": "High",
+    "Stress_Response": "Emotional",
+    "Core_Value": "Emotional Security",
+    "Success_Driver": "Consistency"
+  },
+  "Survey_Answers": {
+    "Q1": "Analyze long-term benefits and plan how to manage both",
+    "Q2": "Explain your reasoning and expect understanding",
+    "Q3": "Future possibilities and what excites you",
+    "Q4": "Meaningful work with freedom and growth",
+    "Q5": "Re-evaluate logically and discuss trade-offs",
+    "Q6": "Trust things will work out with time",
+    "Q7": "Caring, sensitive, and understanding",
+    "Q8": "Take time to reflect on emotions",
+    "Q9": "Emotional security and trust",
+    "Q10": "Discipline, planning, and consistency"
+  },
+  "Raw_Responses": {
+    "When a major career opportunity requires moving away from family, you": "Analyze long-term benefits and plan how to manage both",
+    "In a relationship conflict caused by work pressure, you usually": "Explain your reasoning and expect understanding",
+    "When choosing a career path, you trust more": "Future possibilities and what excites you",
+    "Your ideal future life looks like": "Meaningful work with freedom and growth",
+    "If your partner strongly disagrees with your career choice, you": "Re-evaluate logically and discuss trade-offs",
+    "Under uncertainty about career and relationships, you": "Trust things will work out with time",
+    "People close to you often describe you as": "Caring, sensitive, and understanding",
+    "When making an important life decision, you": "Take time to reflect on emotions",
+    "In both career and relationships, you value more": "Emotional security and trust",
+    "Looking at your future, you believe success comes from": "Discipline, planning, and consistency"
+  }
+}

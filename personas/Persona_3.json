@@ -1,0 +1,43 @@
+{
+  "Persona_ID": "Persona_3",
+  "Name": "Harshv.",
+  "Traits": {
+    "Family_Priority": "Low",
+    "Independence": "High",
+    "Conflict_Handling": "Avoidance",
+    "Career_Orientation": "Visionary",
+    "Risk_Tolerance": "Medium",
+    "Future_Preference": "Flexibility",
+    "Decision_Style": "Delayed",
+    "Uncertainty_Response": "Optimistic",
+    "Personality_Type": "Practical",
+    "Emotional_Orientation": "Low",
+    "Stress_Response": "Cautious",
+    "Core_Value": "Freedom",
+    "Success_Driver": "Consistency"
+  },
+  "Survey_Answers": {
+    "Q1": "Decide independently without external pressure",
+    "Q2": "Avoid the discussion until emotions settle",
+    "Q3": "Future possibilities and what excites you",
+    "Q4": "Balanced life that adapts as things change",
+    "Q5": "Re-evaluate logically and discuss trade-offs",
+    "Q6": "Trust things will work out with time",
+    "Q7": "Practical, reliable, and grounded",
+    "Q8": "Delay until more options appear",
+    "Q9": "Freedom and flexibility",
+    "Q10": "Discipline, planning, and consistency"
+  },
+  "Raw_Responses": {
+    "When a major career opportunity requires moving away from family, you": "Decide independently without external pressure",
+    "In a relationship conflict caused by work pressure, you usually": "Avoid the discussion until emotions settle",
+    "When choosing a career path, you trust more": "Future possibilities and what excites you",
+    "Your ideal future life looks like": "Balanced life that adapts as things change",
+    "If your partner strongly disagrees with your career choice, you": "Re-evaluate logically and discuss trade-offs",
+    "Under uncertainty about career and relationships, you": "Trust things will work out with time",
+    "People close to you often describe you as": "Practical, reliable, and grounded",
+    "When making an important life decision, you": "Delay until more options appear",
+    "In both career and relationships, you value more": "Freedom and flexibility",
+    "Looking at your future, you believe success comes from": "Discipline, planning, and consistency"
+  }
+}

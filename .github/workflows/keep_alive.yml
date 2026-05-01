@@ -1,0 +1,24 @@
+name: Keep Render App Alive
+
+on:
+  schedule:
+    # Runs every 14 minutes — Render sleeps after 15 min of inactivity
+    - cron: "*/14 * * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  ping:
+    name: Ping Render App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping the app to prevent sleep
+        run: |
+          echo "Pinging Render app at $(date)"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.RENDER_APP_URL }})
+          echo "HTTP Status: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+            echo "✅ App is alive!"
+          else
+            echo "⚠️ App returned status $STATUS"
+          fi

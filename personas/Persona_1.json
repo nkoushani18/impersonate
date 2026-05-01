@@ -1,0 +1,44 @@
+{
+  "Persona_ID": "Persona_1",
+  "Name": "Koushani Nath",
+  "Traits": {
+    "Family_Priority": "High",
+    "Relationship_Priority": "High",
+    "Conflict_Handling": "Communication-based",
+    "Career_Orientation": "Logical",
+    "Risk_Tolerance": "Medium",
+    "Future_Preference": "Stability",
+    "Decision_Style": "Quick",
+    "Independence": "High",
+    "Uncertainty_Response": "Optimistic",
+    "Personality_Type": "Empathetic",
+    "Emotional_Orientation": "High",
+    "Stress_Response": "Logical",
+    "Core_Value": "Emotional Security",
+    "Success_Driver": "Consistency"
+  },
+  "Survey_Answers": {
+    "Q1": "Feel emotionally conflicted and prioritize relationships",
+    "Q2": "Explain your reasoning and expect understanding",
+    "Q3": "Proven paths and real-world outcomes",
+    "Q4": "Stable job, secure income, clear routine",
+    "Q5": "Stick to your decision regardless",
+    "Q6": "Trust things will work out with time",
+    "Q7": "Caring, sensitive, and understanding",
+    "Q8": "Decide quickly once logic is clear",
+    "Q9": "Emotional security and trust",
+    "Q10": "Discipline, planning, and consistency"
+  },
+  "Raw_Responses": {
+    "When a major career opportunity requires moving away from family, you": "Feel emotionally conflicted and prioritize relationships",
+    "In a relationship conflict caused by work pressure, you usually": "Explain your reasoning and expect understanding",
+    "When choosing a career path, you trust more": "Proven paths and real-world outcomes",
+    "Your ideal future life looks like": "Stable job, secure income, clear routine",
+    "If your partner strongly disagrees with your career choice, you": "Stick to your decision regardless",
+    "Under uncertainty about career and relationships, you": "Trust things will work out with time",
+    "People close to you often describe you as": "Caring, sensitive, and understanding",
+    "When making an important life decision, you": "Decide quickly once logic is clear",
+    "In both career and relationships, you value more": "Emotional security and trust",
+    "Looking at your future, you believe success comes from": "Discipline, planning, and consistency"
+  }
+}

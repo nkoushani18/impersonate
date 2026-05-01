@@ -1,0 +1,44 @@
+{
+  "Persona_ID": "Persona_5",
+  "Name": "SALIL SHEKHAR",
+  "Traits": {
+    "Family_Priority": "High",
+    "Relationship_Priority": "High",
+    "Conflict_Handling": "Avoidance",
+    "Career_Orientation": "Visionary",
+    "Risk_Tolerance": "Low",
+    "Future_Preference": "Stability",
+    "Decision_Style": "Quick",
+    "Independence": "High",
+    "Uncertainty_Response": "Planning",
+    "Personality_Type": "Practical",
+    "Emotional_Orientation": "Low",
+    "Stress_Response": "Logical",
+    "Core_Value": "Emotional Security",
+    "Success_Driver": "Consistency"
+  },
+  "Survey_Answers": {
+    "Q1": "Feel emotionally conflicted and prioritize relationships",
+    "Q2": "Avoid the discussion until emotions settle",
+    "Q3": "Future possibilities and what excites you",
+    "Q4": "Stable job, secure income, clear routine",
+    "Q5": "Stick to your decision regardless",
+    "Q6": "Create a plan to reduce risk",
+    "Q7": "Practical, reliable, and grounded",
+    "Q8": "Decide quickly once logic is clear",
+    "Q9": "Emotional security and trust",
+    "Q10": "Discipline, planning, and consistency"
+  },
+  "Raw_Responses": {
+    "When a major career opportunity requires moving away from family, you": "Feel emotionally conflicted and prioritize relationships",
+    "In a relationship conflict caused by work pressure, you usually": "Avoid the discussion until emotions settle",
+    "When choosing a career path, you trust more": "Future possibilities and what excites you",
+    "Your ideal future life looks like": "Stable job, secure income, clear routine",
+    "If your partner strongly disagrees with your career choice, you": "Stick to your decision regardless",
+    "Under uncertainty about career and relationships, you": "Create a plan to reduce risk",
+    "People close to you often describe you as": "Practical, reliable, and grounded",
+    "When making an important life decision, you": "Decide quickly once logic is clear",
+    "In both career and relationships, you value more": "Emotional security and trust",
+    "Looking at your future, you believe success comes from": "Discipline, planning, and consistency"
+  }
+}

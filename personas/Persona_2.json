@@ -1,0 +1,44 @@
+{
+  "Persona_ID": "Persona_2",
+  "Name": "Rishit Tandon",
+  "Traits": {
+    "Family_Priority": "Medium",
+    "Relationship_Priority": "Medium",
+    "Conflict_Handling": "Communication-based",
+    "Career_Orientation": "Visionary",
+    "Risk_Tolerance": "Low",
+    "Future_Preference": "Growth",
+    "Decision_Style": "Quick",
+    "Independence": "High",
+    "Uncertainty_Response": "Planning",
+    "Personality_Type": "Visionary",
+    "Creativity": "High",
+    "Stress_Response": "Logical",
+    "Core_Value": "Emotional Security",
+    "Success_Driver": "Exploration"
+  },
+  "Survey_Answers": {
+    "Q1": "Analyze long-term benefits and plan how to manage both",
+    "Q2": "Explain your reasoning and expect understanding",
+    "Q3": "Future possibilities and what excites you",
+    "Q4": "Meaningful work with freedom and growth",
+    "Q5": "Stick to your decision regardless",
+    "Q6": "Create a plan to reduce risk",
+    "Q7": "Visionary, curious, and idea-driven",
+    "Q8": "Decide quickly once logic is clear",
+    "Q9": "Emotional security and trust",
+    "Q10": "Passion, exploration, and adaptability"
+  },
+  "Raw_Responses": {
+    "When a major career opportunity requires moving away from family, you": "Analyze long-term benefits and plan how to manage both",
+    "In a relationship conflict caused by work pressure, you usually": "Explain your reasoning and expect understanding",
+    "When choosing a career path, you trust more": "Future possibilities and what excites you",
+    "Your ideal future life looks like": "Meaningful work with freedom and growth",
+    "If your partner strongly disagrees with your career choice, you": "Stick to your decision regardless",
+    "Under uncertainty about career and relationships, you": "Create a plan to reduce risk",
+    "People close to you often describe you as": "Visionary, curious, and idea-driven",
+    "When making an important life decision, you": "Decide quickly once logic is clear",
+    "In both career and relationships, you value more": "Emotional security and trust",
+    "Looking at your future, you believe success comes from": "Passion, exploration, and adaptability"
+  }
+}

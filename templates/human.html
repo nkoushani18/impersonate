@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Human Response - PentaAI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Override main chat's overflow hidden */
+        html,
+        body {
+            overflow: auto !important;
+            height: auto !important;
+        }
+
+        /* Mobile-first base styles */
+        body {
+            background: #0f0f1a;
+            position: relative;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(120, 119, 198, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(147, 51, 234, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Sticky Header */
+        .header {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            position: sticky;
+            top: 12px;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--cream);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Persona Header - Mobile Optimized */
+        .persona-header {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .persona-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+            box-shadow: 0 4px 16px rgba(138, 196, 255, 0.4);
+            flex-shrink: 0;
+        }
+
+        .persona-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .persona-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .persona-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--cream);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Question Card - Mobile Optimized */
+        .question-card {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--orange);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-label {
+            font-size: 0.7rem;
+            color: var(--orange);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            color: var(--cream);
+            margin-bottom: 16px;
+            line-height: 1.5;
+            font-weight: 500;
+            background: var(--glass-bg);
+            padding: 14px;
+            border-radius: 12px;
+        }
+
+        /* AI Response - Distinct Style */
+        .ai-response {
+            background: rgba(138, 196, 255, 0.12);
+            border: 1px solid rgba(138, 196, 255, 0.25);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .ai-response-label {
+            font-size: 0.65rem;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-response-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        /* Textarea - Touch-Friendly */
+        .response-input {
+            width: 100%;
+            min-height: 140px;
+            padding: 16px;
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 16px;
+            resize: vertical;
+            background: var(--glass-bg);
+            color: var(--cream);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            -webkit-appearance: none;
+            /* Touch optimization */
+            touch-action: manipulation;
+        }
+
+        .response-input:focus {
+            outline: none;
+            border-color: var(--orange);
+            box-shadow: 0 0 0 4px rgba(255, 153, 0, 0.2),
+                0 4px 20px rgba(255, 153, 0, 0.15);
+            background: rgba(64, 64, 64, 0.7);
+        }
+
+        .response-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Submit Button - Large Touch Target */
+        .submit-btn {
+            background: var(--gradient-primary);
+            color: var(--dark-gray);
+            border: none;
+            padding: 18px 32px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 153, 0, 0.4);
+            font-family: inherit;
+            width: 100%;
+            /* Full width on mobile */
+            min-height: 56px;
+            /* Large touch target */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .submit-btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(255, 153, 0, 0.5);
+        }
+
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Result Messages */
+        .no-questions,
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .no-questions h3 {
+            color: var(--cream);
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+        }
+
+        .no-questions a {
+            color: var(--orange);
+            text-decoration: underline;
+        }
+
+        .loading {
+            color: var(--orange);
+            font-size: 1.1rem;
+        }
+
+        .success-message,
+        .error-message {
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 16px;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .success-message {
+            background: rgba(40, 200, 64, 0.15);
+            border: 2px solid rgba(40, 200, 64, 0.4);
+            color: var(--cream);
+        }
+
+        .error-message {
+            background: rgba(255, 95, 87, 0.15);
+            border: 2px solid rgba(255, 95, 87, 0.4);
+            color: var(--cream);
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Navigation - Bottom Fixed on Mobile */
+        .nav-fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border-top: 1px solid var(--glass-border);
+            padding: 12px;
+            z-index: 99;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-link {
+            flex: 1;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 14px 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-link:active {
+            transform: scale(0.98);
+        }
+
+        /* Tablet and Desktop Styles */
+        @media (min-width: 768px) {
+            .container {
+                padding: 24px;
+            }
+
+            .header {
+                padding: 24px 28px;
+                margin-bottom: 24px;
+                border-radius: 16px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .persona-header {
+                padding: 24px;
+                margin-bottom: 24px;
+                border-radius: 16px;
+            }
+
+            .persona-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 1.4rem;
+            }
+
+            .persona-name {
+                font-size: 1.6rem;
+            }
+
+            .question-card {
+                padding: 28px;
+                margin-bottom: 24px;
+                border-radius: 16px;
+            }
+
+            .response-input {
+                min-height: 120px;
+                font-size: 0.95rem;
+            }
+
+            .submit-btn {
+                width: auto;
+                min-width: 200px;
+                padding: 16px 40px;
+            }
+
+            /* Desktop: Static navigation */
+            .nav-fixed {
+                position: static;
+                background: transparent;
+                border: none;
+                backdrop-filter: none;
+                padding: 30px 0 0;
+                justify-content: center;
+            }
+
+            .nav-link {
+                flex: none;
+            }
+
+            .nav-link:hover {
+                background: var(--glass-bg-strong);
+                border-color: var(--orange);
+                color: var(--cream);
+                transform: translateY(-2px);
+            }
+        }
+
+        /* Large Desktop */
+        @media (min-width: 1024px) {
+            .container {
+                padding: 30px;
+            }
+        }
+
+        /* Padding for fixed nav on mobile */
+        @media (max-width: 767px) {
+            .container {
+                padding-bottom: 80px;
+            }
+        }
+
+        /* Judging Animation Overlay */
+        .judging-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 26, 0.95);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .judging-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .judging-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        /* Animated Scales */
+        .scales-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .scale {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            animation: scaleBalance 2s ease-in-out infinite;
+        }
+
+        @keyframes scaleBalance {
+
+            0%,
+            100% {
+                transform: rotate(-5deg);
+            }
+
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        .scale-base {
+            width: 6px;
+            height: 80px;
+            background: var(--orange);
+            margin: 0 auto;
+            border-radius: 3px;
+            box-shadow: 0 0 20px rgba(255, 153, 0, 0.5);
+        }
+
+        .scale-beam {
+            width: 100px;
+            height: 4px;
+            background: var(--orange);
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            box-shadow: 0 0 15px rgba(255, 153, 0, 0.5);
+        }
+
+        .scale-pan {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--orange);
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            animation: panFloat 2s ease-in-out infinite;
+        }
+
+        .scale-pan.left {
+            left: 0;
+        }
+
+        .scale-pan.right {
+            right: 0;
+        }
+
+        @keyframes panFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .scale-pan::before {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background: var(--orange);
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Progress Text */
+        .judging-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--cream);
+            margin-bottom: 12px;
+        }
+
+        .judging-subtext {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        /* Animated Dots */
+        .loading-dots {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--orange);
+            border-radius: 50%;
+            animation: dotPulse 1.4s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dotPulse {
+
+            0%,
+            60%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            30% {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: var(--glass-bg);
+            border-radius: 2px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            width: 0%;
+            animation: progressFill 10s linear;
+            box-shadow: 0 0 10px rgba(255, 153, 0, 0.6);
+        }
+
+        @keyframes progressFill {
+            0% {
+                width: 0%;
+            }
+
+            100% {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sticky Header -->
+        <div class="header">
+            <h1><span>🎯</span> Human Response</h1>
+            <p>Answer questions as the selected persona</p>
+        </div>
+
+        <!-- Persona Header -->
+        <div class="persona-header" id="personaHeader" style="display: none;">
+            <div class="persona-avatar" id="personaAvatar"></div>
+            <div class="persona-info">
+                <div class="persona-label">Responding as</div>
+                <div class="persona-name" id="personaName"></div>
+            </div>
+        </div>
+
+        <!-- Pending Questions -->
+        <div id="pendingSection">
+            <div class="loading">Connecting to active chat...</div>
+        </div>
+    </div>
+
+    <!-- Judging Animation Overlay -->
+    <div class="judging-overlay" id="judgingOverlay">
+        <div class="judging-content">
+            <!-- Animated Scales -->
+            <div class="scales-container">
+                <div class="scale">
+                    <div class="scale-beam"></div>
+                    <div class="scale-pan left"></div>
+                    <div class="scale-pan right"></div>
+                    <div class="scale-base"></div>
+                </div>
+            </div>
+
+            <!-- Progress Text -->
+            <div class="judging-text">Judging Response</div>
+            <div class="judging-subtext">
+                LLM analyzing AI vs Human
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Bottom Navigation (Mobile) / Static (Desktop) -->
+    <div class="nav-fixed">
+        <a href="/" class="nav-link">← Chat</a>
+        <a href="/judge" class="nav-link">Results →</a>
+    </div>
+
+    <script>
+        let personas = [];
+        let currentPersonaId = null;
+        let autoRefreshInterval = null;
+
+        // Load active persona from main chat
+        async function loadActivePersona() {
+            try {
+                const activePersonaId = localStorage.getItem('activePersonaId');
+
+                if (!activePersonaId) {
+                    document.getElementById('pendingSection').innerHTML = `
+                        <div class="no-questions">
+                            <h3>⚠️ No Active Chat</h3>
+                            <p>Please go to the <a href="/">main chat</a> and select a persona first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const response = await fetch('/api/personas');
+                const data = await response.json();
+                personas = data.personas;
+
+                const activePersona = personas.find(p => p.id === activePersonaId);
+
+                if (!activePersona) {
+                    document.getElementById('pendingSection').innerHTML = `
+                        <div class="no-questions">
+                            <h3>⚠️ Persona Not Found</h3>
+                            <p>Please go to the <a href="/">main chat</a> and select a persona.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                currentPersonaId = activePersonaId;
+
+                document.getElementById('personaHeader').style.display = 'flex';
+                document.getElementById('personaName').textContent = activePersona.name;
+
+                const initials = activePersona.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                document.getElementById('personaAvatar').textContent = initials;
+
+                await loadPendingQuestions();
+                startAutoRefresh();
+
+            } catch (error) {
+                console.error('Failed to load active persona:', error);
+                document.getElementById('pendingSection').innerHTML = `
+                    <div class="error-message">
+                        Failed to connect. Please refresh the page.
+                    </div>
+                `;
+            }
+        }
+
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                if (currentPersonaId) {
+                    loadPendingQuestions(true);
+                }
+            }, 5000);
+        }
+
+        async function loadPendingQuestions(silent = false) {
+            const section = document.getElementById('pendingSection');
+
+            if (!silent) {
+                section.innerHTML = '<div class="loading">Loading questions...</div>';
+            }
+
+            try {
+                const response = await fetch(`/api/human/pending?persona_id=${currentPersonaId}`);
+                const data = await response.json();
+
+                if (data.count === 0) {
+                    section.innerHTML = '<div class="no-questions">📭 No pending questions yet.<br>Go to the chat and ask some questions!</div>';
+                    return;
+                }
+
+                const existingInputs = {};
+                if (silent) {
+                    section.querySelectorAll('.response-input').forEach(input => {
+                        if (input.value.trim()) {
+                            existingInputs[input.id] = input.value;
+                        }
+                    });
+                }
+
+                const existingQuestionIds = new Set();
+                section.querySelectorAll('.question-card').forEach(card => {
+                    existingQuestionIds.add(card.id.replace('question-', ''));
+                });
+
+                if (silent) {
+                    data.pending_questions.forEach(question => {
+                        if (!existingQuestionIds.has(question.question_id)) {
+                            const card = createQuestionCard(question);
+                            section.appendChild(card);
+                        }
+                    });
+
+                    Object.keys(existingInputs).forEach(inputId => {
+                        const input = document.getElementById(inputId);
+                        if (input) {
+                            input.value = existingInputs[inputId];
+                        }
+                    });
+                } else {
+                    section.innerHTML = '';
+                    data.pending_questions.forEach(question => {
+                        const card = createQuestionCard(question);
+                        section.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                if (!silent) {
+                    section.innerHTML = '<div class="error-message">Failed to load questions.</div>';
+                }
+                console.error('Failed to load questions:', error);
+            }
+        }
+
+        function createQuestionCard(question) {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `question-${question.question_id}`;
+
+            card.innerHTML = `
+                <div class="question-label"><span>❓</span> User Question</div>
+                <div class="question-text">"${question.user_question}"</div>
+                
+                <div class="ai-response">
+                    <div class="ai-response-label"><span>🤖</span> AI Response</div>
+                    <div class="ai-response-text">"${question.ai_response}"</div>
+                </div>
+
+                <textarea 
+                    class="response-input" 
+                    id="input-${question.question_id}" 
+                    placeholder="Type your authentic response as ${personas.find(p => p.id === currentPersonaId)?.name || 'the persona'}..."
+                    autocomplete="off"
+                    autocorrect="on"
+                    autocapitalize="sentences"
+                    spellcheck="true"
+                ></textarea>
+
+                <button class="submit-btn" onclick="submitResponse('${question.question_id}')">
+                    <span>Submit Response</span>
+                </button>
+
+                <div id="result-${question.question_id}"></div>
+            `;
+
+            return card;
+        }
+
+        async function submitResponse(questionId) {
+            const input = document.getElementById(`input-${questionId}`);
+            const resultDiv = document.getElementById(`result-${questionId}`);
+            const button = event.target.closest('.submit-btn');
+
+            const response = input.value.trim();
+            if (!response) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter a response</div>';
+                setTimeout(() => resultDiv.innerHTML = '', 3000);
+                return;
+            }
+
+            // Auto-open judging page in new tab IMMEDIATELY
+            window.open(`/judging/live?q=${questionId}`, '_blank');
+
+            button.disabled = true;
+            button.innerHTML = '<span>✅ Submitted!</span>';
+            resultDiv.innerHTML = '<div class="loading">Sending to LLM Judge...</div>';
+
+            try {
+                const apiResponse = await fetch('/api/human/respond', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question_id: questionId,
+                        response: response
+                    })
+                });
+
+                const data = await apiResponse.json();
+
+                if (data.success) {
+                    // Don't show score here - it's in the judging tab!
+                    resultDiv.innerHTML = `
+                        <div class="success-message">
+                            <strong style="font-size: 1.2rem;">✅ Response Submitted!</strong>
+                            <p style="margin-top: 12px;">Your response has been sent to the LLM Judge.</p>
+                            <p style="margin-top: 8px; color: var(--orange);">
+                                📊 Check the new tab for live judging animation and results!
+                            </p>
+                        </div>
+                    `;
+
+                    input.disabled = true;
+                    button.style.display = 'none';
+
+                    // Haptic feedback on mobile
+                    if (navigator.vibrate) {
+                        navigator.vibrate(200);
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error || 'Failed to submit'}</div>`;
+                    button.disabled = false;
+                    button.innerHTML = '<span>Submit Response</span>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error-message">Failed to submit. Please try again.</div>';
+                button.disabled = false;
+                button.innerHTML = '<span>Submit Response</span>';
+                console.error('Submission error:', error);
+            }
+        }
+
+        // Load on page load
+        loadActivePersona();
+    </script>
+</body>
+
+</html>

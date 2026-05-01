@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judging...</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            background: #0a0a0f;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .judging-stage {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Animated Background Gradient */
+        .bg-gradient {
+            position: fixed;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 153, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(138, 196, 255, 0.1) 0%, transparent 50%);
+            animation: gradientShift 10s ease infinite;
+            z-index: 0;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(-10%, -10%) rotate(5deg);
+            }
+        }
+
+        /* Content Container */
+        .content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 40px;
+            max-width: 800px;
+        }
+
+        /* Animated Scales - Larger & More Prominent */
+        .scales {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 60px;
+            position: relative;
+            filter: drop-shadow(0 0 40px rgba(255, 153, 0, 0.3));
+        }
+
+        .scale-structure {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            animation: scaleBalance 3s ease-in-out infinite;
+        }
+
+        @keyframes scaleBalance {
+
+            0%,
+            100% {
+                transform: rotate(-8deg);
+            }
+
+            50% {
+                transform: rotate(8deg);
+            }
+        }
+
+        .scale-base {
+            width: 8px;
+            height: 120px;
+            background: linear-gradient(180deg, #ff9900, #ffb347);
+            margin: 0 auto;
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(255, 153, 0, 0.6);
+        }
+
+        .scale-beam {
+            width: 180px;
+            height: 6px;
+            background: linear-gradient(90deg, #ff9900, #ffb347);
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 3px;
+            box-shadow: 0 0 25px rgba(255, 153, 0, 0.5);
+        }
+
+        .scale-pan {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #ff9900;
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            background: rgba(255, 153, 0, 0.1);
+            animation: panFloat 3s ease-in-out infinite;
+        }
+
+        .scale-pan.left {
+            left: -10px;
+        }
+
+        .scale-pan.right {
+            right: -10px;
+        }
+
+        @keyframes panFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-15px) scale(1.05);
+            }
+        }
+
+        .scale-pan::before {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 25px;
+            background: #ff9900;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Judging Text */
+        .judging-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff9900, #ffb347, #8ac4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+
+            0%,
+            100% {
+                opacity: 0.9;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.02);
+            }
+        }
+
+        .judging-subtitle {
+            font-size: 1.3rem;
+            color: rgba(248, 244, 227, 0.7);
+            margin-bottom: 40px;
+        }
+
+        /* Animated Dots */
+        .dots {
+            display: inline-flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: #ff9900;
+            border-radius: 50%;
+            animation: dotBounce 1.4s ease-in-out infinite;
+            box-shadow: 0 0 15px rgba(255, 153, 0, 0.6);
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dotBounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.6;
+            }
+
+            30% {
+                transform: translateY(-20px) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* Result Card - Hidden Initially */
+        .result-card {
+            display: none;
+            background: rgba(64, 64, 64, 0.6);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(248, 244, 227, 0.15);
+            border-radius: 24px;
+            padding: 50px;
+            max-width: 700px;
+            margin: 0 auto;
+            animation: cardReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .result-card.show {
+            display: block;
+        }
+
+        @keyframes cardReveal {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Score Display */
+        .score-display {
+            font-size: 6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff9900, #ffb347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 30px 0;
+            animation: scoreCount 1s ease-out;
+        }
+
+        @keyframes scoreCount {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Intent Badge */
+        .intent-badge {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+
+        .intent-yes {
+            background: rgba(40, 200, 64, 0.2);
+            color: #28c840;
+            border: 2px solid rgba(40, 200, 64, 0.4);
+            box-shadow: 0 0 20px rgba(40, 200, 64, 0.3);
+        }
+
+        .intent-no {
+            background: rgba(255, 95, 87, 0.2);
+            color: #ff5f57;
+            border: 2px solid rgba(255, 95, 87, 0.4);
+            box-shadow: 0 0 20px rgba(255, 95, 87, 0.3);
+        }
+
+        /* Breakdown Grid */
+        .breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .breakdown-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(248, 244, 227, 0.1);
+        }
+
+        .breakdown-label {
+            font-size: 0.8rem;
+            color: rgba(248, 244, 227, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+
+        .breakdown-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8ac4ff, #86a5d9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Reasoning Section */
+        .reasoning {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 16px;
+            border-left: 4px solid #ff9900;
+            margin-top: 30px;
+        }
+
+        .reasoning-title {
+            font-size: 1rem;
+            color: #ff9900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .reasoning-text {
+            font-size: 1.1rem;
+            color: rgba(248, 244, 227, 0.9);
+            line-height: 1.8;
+        }
+
+        /* Close Button */
+        .close-btn {
+            margin-top: 40px;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #ff9900, #ffb347);
+            border: none;
+            border-radius: 12px;
+            color: #2a2a2a;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 153, 0, 0.4);
+        }
+
+        .close-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 153, 0, 0.6);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="judging-stage" id="judgingStage">
+        <div class="content">
+            <!-- Judging Animation -->
+            <div id="animationView">
+                <div class="scales">
+                    <div class="scale-structure">
+                        <div class="scale-beam"></div>
+                        <div class="scale-pan left"></div>
+                        <div class="scale-pan right"></div>
+                        <div class="scale-base"></div>
+                    </div>
+                </div>
+
+                <h1 class="judging-title">Judging</h1>
+                <p class="judging-subtitle">LLM analyzing your response...</p>
+
+                <div class="dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+
+            <!-- Result Card - Shows after judging -->
+            <div class="result-card" id="resultCard">
+                <h2 style="color: var(--cream); font-size: 2rem; margin-bottom: 20px;">Judgment Complete</h2>
+
+                <div class="score-display" id="scoreDisplay">--</div>
+
+                <div class="intent-badge" id="intentBadge">--</div>
+
+                <div class="breakdown" id="breakdownGrid"></div>
+
+                <div class="reasoning">
+                    <div class="reasoning-title">🧠 Judge's Reasoning</div>
+                    <div class="reasoning-text" id="reasoningText">--</div>
+                </div>
+
+                <button class="close-btn" onclick="window.close()">Close & Return</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get question ID from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const questionId = urlParams.get('q');
+
+        if (!questionId) {
+            document.getElementById('animationView').innerHTML = `
+                <h2 style="color: var(--cream);">No Question ID Provided</h2>
+                <p style="color: var(--text-muted);">Please submit a response from the Human Interface.</p>
+            `;
+        } else {
+            // Poll for results
+            pollForResults();
+        }
+
+        async function pollForResults() {
+            const maxAttempts = 60; // 60 seconds max
+            let attempts = 0;
+
+            const interval = setInterval(async () => {
+                attempts++;
+
+                try {
+                    // Get the latest result for this question
+                    const personaId = localStorage.getItem('activePersonaId');
+                    const response = await fetch(`/api/judge/results?persona_id=${personaId}`);
+                    const data = await response.json();
+
+                    // Find the result for this specific question
+                    const result = data.comparisons?.find(c => c.question_id === questionId);
+
+                    if (result && result.judge_result) {
+                        clearInterval(interval);
+                        showResult(result);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        showError();
+                    }
+                } catch (error) {
+                    console.error('Error polling results:', error);
+                    if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        showError();
+                    }
+                }
+            }, 1000); // Poll every second
+        }
+
+        function showResult(result) {
+            const judge = result.judge_result;
+
+            // Hide animation
+            document.getElementById('animationView').style.display = 'none';
+
+            // Show result card
+            const resultCard = document.getElementById('resultCard');
+            resultCard.classList.add('show');
+
+            // --- SCORE LOGIC START ---
+            const intent = judge.breakdown.preference_alignment || 0;
+            const tone = judge.breakdown.emotional_alignment || 0;
+            const factual = judge.breakdown.factual_alignment || 0;
+
+            let calculatedScore = 0;
+            let calcHTML = '';
+            let formulaParts = [];
+
+            // Dynamic Weighting: If Factual is 0, ignore it and redistribute
+            if (factual === 0) {
+                // Intent 70%, Tone 30%
+                calculatedScore = ((intent * 0.7) + (tone * 0.3)).toFixed(0);
+
+                // Build HTML
+                if (intent > 0) {
+                    const pts = (intent * 0.7).toFixed(1);
+                    formulaParts.push(`(${intent} × 0.7)`);
+                    calcHTML += `<div style="margin-bottom:16px;display:flex;justify-content:space-between;"><span style="color:rgba(248,244,227,0.7);">🎯 Intent (70%)</span><span style="font-size:1.4rem;font-weight:700;color:#8ac4ff;">${intent} × 0.7 = ${pts} pts</span></div>`;
+                }
+                if (tone > 0) {
+                    const pts = (tone * 0.3).toFixed(1);
+                    formulaParts.push(`(${tone} × 0.3)`);
+                    calcHTML += `<div style="margin-bottom:16px;display:flex;justify-content:space-between;"><span style="color:rgba(248,244,227,0.7);">🎭 Tone (30%)</span><span style="font-size:1.4rem;font-weight:700;color:#8ac4ff;">${tone} × 0.3 = ${pts} pts</span></div>`;
+                }
+            } else {
+                // Standard Weighting: 60/30/10
+                calculatedScore = ((intent * 0.6) + (tone * 0.3) + (factual * 0.1)).toFixed(0);
+
+                if (intent > 0) {
+                    const pts = (intent * 0.6).toFixed(1);
+                    formulaParts.push(`(${intent} × 0.6)`);
+                    calcHTML += `<div style="margin-bottom:16px;display:flex;justify-content:space-between;"><span style="color:rgba(248,244,227,0.7);">🎯 Intent (60%)</span><span style="font-size:1.4rem;font-weight:700;color:#8ac4ff;">${intent} × 0.6 = ${pts} pts</span></div>`;
+                }
+                if (tone > 0) {
+                    const pts = (tone * 0.3).toFixed(1);
+                    formulaParts.push(`(${tone} × 0.3)`);
+                    calcHTML += `<div style="margin-bottom:16px;display:flex;justify-content:space-between;"><span style="color:rgba(248,244,227,0.7);">🎭 Tone (30%)</span><span style="font-size:1.4rem;font-weight:700;color:#8ac4ff;">${tone} × 0.3 = ${pts} pts</span></div>`;
+                }
+                if (factual > 0) {
+                    const pts = (factual * 0.1).toFixed(1);
+                    formulaParts.push(`(${factual} × 0.1)`);
+                    calcHTML += `<div style="margin-bottom:16px;display:flex;justify-content:space-between;"><span style="color:rgba(248,244,227,0.7);">📚 Factual (10%)</span><span style="font-size:1.4rem;font-weight:700;color:#8ac4ff;">${factual} × 0.1 = ${pts} pts</span></div>`;
+                }
+            }
+
+            const rawTotal = calculatedScore;
+            const formulaStr = formulaParts.join(' + ') + ` = ${rawTotal}`;
+            // --- SCORE LOGIC END ---
+
+            // Use calculated score
+            document.getElementById('scoreDisplay').textContent = `${calculatedScore}/100`;
+
+            // Intent badge
+            const intentBadge = document.getElementById('intentBadge');
+            if (judge.intent_match) {
+                intentBadge.className = 'intent-badge intent-yes';
+                intentBadge.textContent = '✅ Intent Match';
+            } else {
+                intentBadge.className = 'intent-badge intent-no';
+                intentBadge.textContent = '❌ Intent Mismatch';
+            }
+
+            // Formula Calculation Display
+            const breakdownGrid = document.getElementById('breakdownGrid');
+            breakdownGrid.innerHTML = `<div class="breakdown-item" style="grid-column:1/-1;padding:30px;text-align:left;"><div style="font-size:1.1rem;color:var(--orange);margin-bottom:20px;font-weight:600;">📐 Score Calculation</div>${calcHTML}<div style="border-top:2px solid var(--orange);margin:20px 0;"></div><div style="display:flex;justify-content:space-between;margin-bottom:16px;"><span style="font-size:1.2rem;color:var(--cream);font-weight:700;">TOTAL</span><span style="font-size:2rem;font-weight:900;color:var(--orange);">${calculatedScore}/100</span></div><div style="padding:12px;background:rgba(0,0,0,0.3);border-radius:8px;text-align:center;"><div style="font-size:0.85rem;color:rgba(248,244,227,0.5);margin-bottom:6px;">Formula</div><div style="font-family:monospace;color:var(--orange);">${formulaStr}</div></div></div>`;
+
+            // Reasoning
+            document.getElementById('reasoningText').textContent = judge.reasoning || 'No reasoning provided.';
+
+            // Enable overflow to allow scrolling
+            document.body.style.overflow = 'auto';
+        }
+
+        function showError() {
+            document.getElementById('animationView').innerHTML = `
+                <h2 style="color: #ff5f57;">Judging Timed Out</h2>
+                <p style="color: var(--text-muted);">The judgment is taking longer than expected. Please check the Judge page manually.</p>
+                <button class="close-btn" onclick="window.close()" style="margin-top: 30px;">Close Window</button>
+            `;
+        }
+    </script>
+</body>
+
+</html>

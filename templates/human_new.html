@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Response Interface - PentaAI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+    <style>
+        .judge-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .persona-header {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .persona-header-avatar {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--dark-gray);
+            box-shadow: 0 4px 16px rgba(138, 196, 255, 0.4);
+        }
+
+        .persona-header-info {
+            flex: 1;
+        }
+
+        .persona-header-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
+
+        .persona-header-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--cream);
+        }
+
+        .question-card {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: cardFade 0.4s ease;
+        }
+
+        @keyframes cardFade {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-label {
+            font-size: 0.7rem;
+            color: var(--orange);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            color: var(--cream);
+            margin-bottom: 16px;
+            padding: 16px;
+            background: rgba(64, 64, 64, 0.3);
+            border-left: 3px solid var(--orange);
+            border-radius: 8px;
+        }
+
+        .ai-response-section {
+            background: rgba(138, 196, 255, 0.1);
+            border: 1px solid rgba(138, 196, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .ai-response-label {
+            font-size: 0.65rem;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .ai-response-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .response-textarea {
+            width: 100%;
+            min-height: 120px;
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 0.95rem;
+            color: var(--cream);
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .response-textarea:focus {
+            outline: none;
+            border-color: var(--orange);
+            box-shadow: 0 0 0 4px rgba(255, 153, 0, 0.15);
+        }
+
+        .response-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .submit-btn {
+            background: var(--gradient-primary);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 16px rgba(255, 153, 0, 0.35);
+            font-family: inherit;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(255, 153, 0, 0.45);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 12px;
+            animation: resultFade 0.5s ease;
+        }
+
+        @keyframes resultFade {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .success-box {
+            background: rgba(40, 200, 64, 0.15);
+            border: 1px solid rgba(40, 200, 64, 0.3);
+        }
+
+        .error-box {
+            background: rgba(255, 95, 87, 0.15);
+            border: 1px solid rgba(255, 95, 87, 0.3);
+        }
+
+        .score-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--orange);
+            text-align: center;
+            margin: 12px 0;
+        }
+
+        .loading-box,
+        .no-questions {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-muted);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border-light);
+            border-radius: 16px;
+            backdrop-filter: blur(40px);
+        }
+
+        .loading-box {
+            color: var(--orange);
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 30px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 12px 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            display: inline-block;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .nav-link:hover {
+            background: var(--glass-bg-strong);
+            border-color: var(--orange);
+            color: var(--cream);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app" style="padding: 30px;">
+        <div class="judge-container">
+            <!-- Header matching main chat -->
+            <div class="chat-area" style="margin-bottom: 20px;">
+                <div class="chat-header">
+                    <div class="logo-icon" style="width: 42px; height: 42px;">🎯</div>
+                    <div class="header-info">
+                        <h2>Human Response Interface</h2>
+                        <div class="status">
+                            <span style="color: var(--text-muted);">Answer questions as the selected persona</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Persona Header -->
+            <div class="persona-header" id="personaHeader" style="display: none;">
+                <div class="persona-header-avatar" id="personaAvatar"></div>
+                <div class="persona-header-info">
+                    <div class="persona-header-label">Responding as</div>
+                    <div class="persona-header-name" id="personaName"></div>
+                </div>
+            </div>
+
+            <!-- Pending Questions Section -->
+            <div id="pendingSection">
+                <div class="loading-box">Connecting to active chat...</div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Back to Chat</a>
+                <a href="/judge" class="nav-link">View Judge Results →</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/human.js"></script>
+</body>
+
+</html>
