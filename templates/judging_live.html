@@ -491,7 +491,15 @@
             let formulaParts = [];
 
             // Dynamic Weighting: If Factual is 0, ignore it and redistribute
-            if (factual === 0) {
+            if (factual === 0 && tone === 0) {
+                // 1-word answer (XOR question) - no tone/factual to judge
+                calculatedScore = intent.toFixed(0);
+
+                if (intent > 0) {
+                    formulaParts.push(`${intent}`);
+                    calcHTML += `<div style="margin-bottom:16px;display:flex;justify-content:space-between;"><span style="color:rgba(248,244,227,0.7);">🎯 Intent (100%)</span><span style="font-size:1.4rem;font-weight:700;color:#8ac4ff;">${intent} = ${intent} pts</span></div>`;
+                }
+            } else if (factual === 0) {
                 // Intent 70%, Tone 30%
                 calculatedScore = ((intent * 0.7) + (tone * 0.3)).toFixed(0);
 
