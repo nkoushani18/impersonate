@@ -285,4 +285,14 @@ REASONING: [1 sentence explanation]"""
             print(f"[JUDGE] P:{p} E:{e} F:{f} → {final_score}", flush=True)
 
         result["score"] = final_score
+
+        # Fallback reasoning if the LLM stopped generating early
+        if not result["reasoning"]:
+            if p >= 80:
+                result["reasoning"] = "Both the AI and the Human provided the exact same choice, indicating a perfect intent match."
+            elif p <= 40:
+                result["reasoning"] = "The AI and Human provided conflicting choices or completely unrelated answers."
+            else:
+                result["reasoning"] = "Partial alignment detected between the AI and human responses."
+
         return result
