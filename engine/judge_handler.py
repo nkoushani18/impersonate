@@ -269,12 +269,15 @@ REASONING: [1 sentence explanation]"""
             print(f"[JUDGE] ⚠️ Preference={p} (High) but Intent=NO → correcting to YES.")
             result["intent_match"] = True
 
-        # Final score formula (unchanged)
+        # Final score formula
         p = result["breakdown"]["preference_alignment"]
         e = result["breakdown"]["emotional_alignment"]
         f = result["breakdown"]["factual_alignment"]
 
-        if f == 0:
+        if f == 0 and e == 0:
+            final_score = p
+            print(f"[JUDGE] 1-word answer detected (F=0, E=0) → P:{p} = {final_score}", flush=True)
+        elif f == 0:
             final_score = int((p * 0.7) + (e * 0.3))
             print(f"[JUDGE] Factual=0 → P:{p}×0.7 + E:{e}×0.3 = {final_score}", flush=True)
         else:
