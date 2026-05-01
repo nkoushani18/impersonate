@@ -1,93 +1,149 @@
 """
 Gemini LLM Handler
 Fast, intelligent persona-based responses using Google Gemini.
+Supports multi-key + multi-model rotation to maximize free quota.
 """
 
 import google.generativeai as genai
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 
 # Persona demographic info
 PERSONA_DEMOGRAPHICS = {
     "Persona_1": {"gender": "female", "age": 21, "nickname": "Koushani"},
-    "Persona_2": {"gender": "male", "age": 21, "nickname": "Rishit"},
-    "Persona_3": {"gender": "male", "age": 21, "nickname": "Harsh"},
+    "Persona_2": {"gender": "male",   "age": 21, "nickname": "Rishit"},
+    "Persona_3": {"gender": "male",   "age": 21, "nickname": "Harsh"},
     "Persona_4": {"gender": "female", "age": 21, "nickname": "Manya"},
-    "Persona_5": {"gender": "male", "age": 21, "nickname": "Salil"},
+    "Persona_5": {"gender": "male",   "age": 21, "nickname": "Salil"},
 }
 
 
 class GeminiHandler:
-    """Handles LLM-based persona responses using Gemini with model rotation."""
-    
-    # Models to try in order (when one hits quota, try the next)
+    """
+    Handles LLM-based persona responses using Gemini.
+
+    Rotation strategy:
+      1. On a quota / rate-limit error, rotate to the next MODEL (same key).
+      2. When all models on the current key are exhausted, rotate to the next KEY
+         and reset the model index back to 0.
+      3. If every key × model combination fails, return a graceful fallback.
+    """
+
+    # Models ordered by RPD generosity (best first).
+    # 0-quota models (gemini-2.0-flash, gemini-2.0-flash-lite) are excluded.
     MODEL_LIST = [
-        'models/gemini-2.5-flash',
-        'models/gemini-2.0-flash',
-        'models/gemini-2.5-flash-lite',
-        'models/gemini-2.0-flash-lite',
-        'models/gemini-flash-latest',
+        "gemini-2.5-flash-lite-preview-06-17",   # 10 RPM | 20 RPD
+        "gemini-2.5-flash",                       # 5  RPM | 20 RPD
+        "gemini-2.5-flash-exp-0827",              # fallback alias
+        "gemini-1.5-flash",                       # reliable older model
+        "gemini-1.5-flash-8b",                    # lightest fallback
     ]
-    
-    def __init__(self, api_key: str):
-        """Initialize Gemini with API key."""
-        genai.configure(api_key=api_key)
-        
+
+    def __init__(self, api_keys: List[str]):
+        """
+        Args:
+            api_keys: List of Gemini API keys to rotate through.
+        """
+        if not api_keys:
+            raise ValueError("At least one API key is required.")
+
+        self.api_keys = api_keys
+        self.current_key_index = 0
         self.current_model_index = 0
-        self._init_model()
-        
-        self.generation_config = genai.GenerationConfig(
-            temperature=0.9,
-            top_p=0.95,
-            max_output_tokens=500,
+
+        # Total combinations tried in one request — prevents infinite loops
+        self._max_rotations = len(api_keys) * len(self.MODEL_LIST)
+
+        self._configure()
+        print(
+            f"[LLM] GeminiHandler ready | "
+            f"{len(api_keys)} key(s) × {len(self.MODEL_LIST)} model(s) = "
+            f"{self._max_rotations} fallback combinations",
+            flush=True,
         )
-        print(f"[LLM] GeminiHandler initialized with {self.MODEL_LIST[self.current_model_index]}", flush=True)
-    
-    def _init_model(self):
-        """Initialize the current model."""
-        model_name = self.MODEL_LIST[self.current_model_index]
-        self.model = genai.GenerativeModel(model_name)
-        print(f"[LLM] Using model: {model_name}", flush=True)
-    
-    def _rotate_model(self):
-        """Switch to the next model in the list."""
-        self.current_model_index = (self.current_model_index + 1) % len(self.MODEL_LIST)
-        self._init_model()
-        print(f"[LLM] Rotated to model index {self.current_model_index}", flush=True)
-    
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _configure(self):
+        """Apply current key + model to genai."""
+        key   = self.api_keys[self.current_key_index]
+        model = self.MODEL_LIST[self.current_model_index]
+        genai.configure(api_key=key)
+        self.model = genai.GenerativeModel(model)
+        print(
+            f"[LLM] Using key[{self.current_key_index + 1}] + "
+            f"model '{model}'",
+            flush=True,
+        )
+
+    def _rotate(self) -> bool:
+        """
+        Advance to the next model, then next key when models wrap around.
+
+        Returns:
+            True  — a new combination is available.
+            False — all combinations exhausted.
+        """
+        self.current_model_index += 1
+
+        if self.current_model_index >= len(self.MODEL_LIST):
+            # All models on this key exhausted → next key
+            self.current_model_index = 0
+            self.current_key_index += 1
+
+            if self.current_key_index >= len(self.api_keys):
+                print("[LLM] ❌ All keys × models exhausted.", flush=True)
+                return False
+
+            print(
+                f"[LLM] Key[{self.current_key_index}] quota done → "
+                f"rotating to key[{self.current_key_index + 1}]",
+                flush=True,
+            )
+
+        self._configure()
+        return True
+
+    def _is_quota_error(self, error_str: str) -> bool:
+        quota_signals = ["429", "quota", "rate", "resource_exhausted", "exhausted"]
+        low = error_str.lower()
+        return any(s in low for s in quota_signals)
+
+    # ------------------------------------------------------------------
+    # Persona context builder (unchanged logic)
+    # ------------------------------------------------------------------
+
     def _build_persona_context(self, persona: Dict, persona_id: str) -> str:
         """Build context from persona traits AND original Q&A examples."""
-        name = persona.get("Name", "Unknown")
+        name   = persona.get("Name", "Unknown")
         traits = persona.get("Traits", {})
-        
-        demo = PERSONA_DEMOGRAPHICS.get(persona_id, {"gender": "person", "age": 21})
+        demo   = PERSONA_DEMOGRAPHICS.get(persona_id, {"gender": "person", "age": 21})
         gender = demo.get("gender", "person")
-        
-        # Get original question-answer pairs if available
+
         raw_responses = persona.get("Raw_Responses", {})
-        
-        if gender == "female":
-            style = "You're a 21-year-old Indian girl texting casually."
-        else:
-            style = "You're a 21-year-old Indian guy texting casually."
-        
-        # Build examples from actual Q&A if available
+
+        style = (
+            "You're a 21-year-old Indian girl texting casually."
+            if gender == "female"
+            else "You're a 21-year-old Indian guy texting casually."
+        )
+
         examples_text = ""
         if raw_responses:
             examples_text = "\n\nHere are examples of how YOU answered similar questions:\n"
-            for question, answer in list(raw_responses.items())[:6]:  # Use top 6 examples
-                # Clean up question text
+            for question, answer in list(raw_responses.items())[:6]:
                 q = question.replace("'", "").strip()
                 a = str(answer).strip()
-                if a and a.lower() not in ['nan', 'none', '']:
+                if a and a.lower() not in ["nan", "none", ""]:
                     examples_text += f'Q: "{q}"\nYOU: "{a}"\n\n'
-        
-        # Fall back to trait descriptions if no raw responses
+
         traits_text = ""
         if not examples_text:
             traits_text = "\n\nYour personality traits:\n"
             traits_text += "\n".join([f"- {k}: {v}" for k, v in traits.items()])
-        
+
         return f"""You are {name}. {style}
 {examples_text}{traits_text}
 Rules:
@@ -96,110 +152,89 @@ Rules:
 3. Be direct, match YOUR examples.
 4. NEVER say you're an AI.
 5. Don't be evasive. Pick one side clearly."""
-    
+
+    # ------------------------------------------------------------------
+    # Main entry point
+    # ------------------------------------------------------------------
+
     def generate_response(
-        self, 
-        persona: Dict, 
+        self,
+        persona: Dict,
         user_message: str,
         include_reasoning: bool = False,
-        persona_id: str = None
+        persona_id: str = None,
     ) -> Dict:
-        """Generate a persona-based response."""
-        print(f"[LLM-HANDLER] Starting generation for: '{user_message}'", flush=True)
-        
-        context = self._build_persona_context(persona, persona_id or "Persona_1")
-        
-        # Dynamic constraint for "X or Y" questions
-        constraint = ""
-        if " or " in user_message.lower():
-            constraint = " (CRITICAL: Reply with ONLY ONE WORD - either the first option or the second. NO punctuation. NO explanations. JUST THE CHOICE.)"
-        
+        """
+        Generate a persona-based response with automatic key+model rotation.
+        """
+        print(f"[LLM] Generating for: '{user_message}'", flush=True)
+
+        context    = self._build_persona_context(persona, persona_id or "Persona_1")
+        is_xor     = " or " in user_message.lower()
+        constraint = (
+            " (CRITICAL: Reply with ONLY ONE WORD - either the first option or the second."
+            " NO punctuation. NO explanations. JUST THE CHOICE.)"
+            if is_xor else ""
+        )
+
         prompt = f"""{context}
 
 Friend: "{user_message}"
 
 Your reply{constraint}:"""
-        
-        print(f"[LLM-HANDLER] Prompt length: {len(prompt)} chars", flush=True)
-        
-        try:
-            response = self.model.generate_content(
-                prompt,
-                generation_config=self.generation_config
-            )
-            
-            print(f"[LLM-HANDLER] Got response object", flush=True)
-            
-            # Check if response has text
-            if not response.text:
-                print(f"[LLM-HANDLER] Response has no text!", flush=True)
-                return {
-                    "response": "idk man, that's a tough one",
-                    "success": False,
-                    "error": "Empty response from Gemini"
-                }
-            
-            text = response.text.strip()
-            print(f"[LLM-HANDLER] Raw response: '{text}'", flush=True)
-            
-            # Clean quotes
-            if text.startswith('"') and text.endswith('"'):
-                text = text[1:-1]
-            
-            # For "X or Y" questions, extract ONLY the first word (the choice)
-            if " or " in user_message.lower():
-                # Remove punctuation and get first meaningful word
-                first_word = text.split()[0] if text.split() else text
-                # Remove trailing punctuation
-                first_word = first_word.strip('.,!?;:-"\'')
-                print(f"[LLM-HANDLER] Extracted choice: '{first_word}'", flush=True)
-                text = first_word
-            
-            return {
-                "response": text,
-                "reasoning": None,
-                "success": True
-            }
-                
-        except Exception as e:
-            error_str = str(e)
-            print(f"[LLM-HANDLER] ERROR: {type(e).__name__}: {error_str}", flush=True)
-            
-            # Check for quota/rate limit errors - try rotating model
-            if "429" in error_str or "quota" in error_str.lower() or "rate" in error_str.lower():
-                print(f"[LLM-HANDLER] Quota exceeded! Rotating to next model...", flush=True)
-                self._rotate_model()
-                
-                # Try once more with new model
-                try:
-                    response = self.model.generate_content(
-                        prompt,
-                        generation_config=self.generation_config
-                    )
-                    if response.text:
-                        text = response.text.strip()
-                        if text.startswith('"') and text.endswith('"'):
-                            text = text[1:-1]
-                        
-                        # For "X or Y" questions, extract ONLY the first word
-                        if " or " in user_message.lower():
-                            first_word = text.split()[0] if text.split() else text
-                            first_word = first_word.strip('.,!?;:-"\'')
-                            text = first_word
-                        
-                        print(f"[LLM-HANDLER] Success with rotated model!", flush=True)
-                        return {
-                            "response": text,
-                            "reasoning": None,
-                            "success": True
-                        }
-                except Exception as e2:
-                    print(f"[LLM-HANDLER] Retry also failed: {e2}", flush=True)
-            
-            return {
-                "response": f"Error: {error_str[:100]}",
-                "reasoning": None,
-                "success": False,
-                "error": error_str
-            }
 
+        generation_config = genai.GenerationConfig(
+            temperature=0.9,
+            top_p=0.95,
+            max_output_tokens=500,
+        )
+
+        rotations_tried = 0
+
+        while rotations_tried <= self._max_rotations:
+            try:
+                response = self.model.generate_content(
+                    prompt, generation_config=generation_config
+                )
+
+                if not response.text:
+                    return {
+                        "response": "idk man, that's a tough one",
+                        "success": False,
+                        "error": "Empty response from Gemini",
+                    }
+
+                text = response.text.strip().strip('"')
+
+                if is_xor:
+                    first_word = text.split()[0] if text.split() else text
+                    text = first_word.strip('.,!?;:-"\'')
+
+                print(f"[LLM] ✅ Response: '{text}'", flush=True)
+                return {"response": text, "reasoning": None, "success": True}
+
+            except Exception as e:
+                error_str = str(e)
+                print(f"[LLM] ⚠️  Error: {type(e).__name__}: {error_str[:120]}", flush=True)
+
+                if self._is_quota_error(error_str):
+                    rotations_tried += 1
+                    print(f"[LLM] Quota hit — rotation attempt {rotations_tried}/{self._max_rotations}", flush=True)
+                    if not self._rotate():
+                        break  # truly exhausted
+                else:
+                    # Non-quota error — don't rotate, just fail fast
+                    return {
+                        "response": f"Error: {error_str[:100]}",
+                        "reasoning": None,
+                        "success": False,
+                        "error": error_str,
+                    }
+
+        # All combinations exhausted
+        return {
+            "response": "Sorry, all API quotas are currently exhausted. Try again later!",
+            "reasoning": None,
+            "success": False,
+            "error": "All API key × model combinations exhausted.",
+        }

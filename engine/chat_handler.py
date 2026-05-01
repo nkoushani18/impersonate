@@ -11,11 +11,17 @@ from engine.persona_loader import PersonaLoader
 from engine.intent_detector import IntentDetector
 from engine.llm_handler import GeminiHandler
 
-# Load .env file for local development (ignored in production where env vars are set on the platform)
+# Load .env for local development (on Render, env vars are set in dashboard)
 load_dotenv()
 
-# Read API key from environment variable — set this in Render's dashboard
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# Collect all API keys — supports 1 to 4 keys, skips any that are empty
+API_KEYS = [
+    os.environ.get("GEMINI_API_KEY_1", ""),
+    os.environ.get("GEMINI_API_KEY_2", ""),
+    os.environ.get("GEMINI_API_KEY_3", ""),
+    os.environ.get("GEMINI_API_KEY_4", ""),
+]
+API_KEYS = [k for k in API_KEYS if k.strip()]  # remove empty entries
 
 
 class ChatHandler:
@@ -25,11 +31,13 @@ class ChatHandler:
         self.persona_loader = PersonaLoader()
         self.intent_detector = IntentDetector()
         
-        # Initialize Gemini LLM with API key
+        # Initialize Gemini LLM with all available API keys
         try:
-            self.llm = GeminiHandler(GEMINI_API_KEY)
+            if not API_KEYS:
+                raise ValueError("No GEMINI_API_KEY_* environment variables found.")
+            self.llm = GeminiHandler(API_KEYS)
             self.use_llm = True
-            print("[*] Gemini LLM initialized successfully!")
+            print(f"[*] Gemini LLM initialized with {len(API_KEYS)} key(s)!")
         except Exception as e:
             self.llm = None
             self.use_llm = False
