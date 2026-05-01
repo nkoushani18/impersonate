@@ -29,14 +29,14 @@ class GeminiHandler:
       3. If every key × model combination fails, return a graceful fallback.
     """
 
-    # Models ordered by RPD generosity (best first).
-    # 0-quota models (gemini-2.0-flash, gemini-2.0-flash-lite) are excluded.
+    # Models confirmed to have free quota from your AI Studio dashboard.
+    # Priority: highest RPD first. 0-quota models excluded.
+    # gemini-3.1-flash-lite → 500 RPD (best!) | gemini-2.5-flash → 20 RPD
     MODEL_LIST = [
-        "gemini-2.5-flash-lite-preview-06-17",   # 10 RPM | 20 RPD
-        "gemini-2.5-flash",                       # 5  RPM | 20 RPD
-        "gemini-2.5-flash-exp-0827",              # fallback alias
-        "gemini-1.5-flash",                       # reliable older model
-        "gemini-1.5-flash-8b",                    # lightest fallback
+        "gemini-2.5-flash-lite-preview-06-17",  # 10 RPM | 250K TPM | 20 RPD
+        "gemini-2.5-flash",                      #  5 RPM | 250K TPM | 20 RPD
+        "gemini-1.5-flash",                      # reliable fallback, large quota
+        "gemini-1.5-flash-8b",                   # lightest fallback
     ]
 
     def __init__(self, api_keys: List[str]):
@@ -55,6 +55,14 @@ class GeminiHandler:
         self._max_rotations = len(api_keys) * len(self.MODEL_LIST)
 
         self._configure()
+
+        # Generation config — identical to original (temperature, top_p, max_output_tokens unchanged)
+        self.generation_config = genai.GenerationConfig(
+            temperature=0.9,
+            top_p=0.95,
+            max_output_tokens=500,
+        )
+
         print(
             f"[LLM] GeminiHandler ready | "
             f"{len(api_keys)} key(s) × {len(self.MODEL_LIST)} model(s) = "
@@ -183,11 +191,7 @@ Friend: "{user_message}"
 
 Your reply{constraint}:"""
 
-        generation_config = genai.GenerationConfig(
-            temperature=0.9,
-            top_p=0.95,
-            max_output_tokens=500,
-        )
+        generation_config = self.generation_config  # set once in __init__, unchanged
 
         rotations_tried = 0
 
