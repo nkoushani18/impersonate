@@ -17,29 +17,19 @@ class JudgeHandler:
     def __init__(self, ollama_url: str = "http://localhost:11434"):
         self.ollama_url = ollama_url
         self.model = "llama3.2"
-
-        # Gemini fallback — uses the same keys already loaded in chat_handler
-        self._gemini_model = None
-        self._init_gemini_fallback()
-
-    def _init_gemini_fallback(self):
-        """Initialize Gemini as a fallback judge."""
-        try:
-            import google.generativeai as genai
-            from dotenv import load_dotenv
-            load_dotenv()
-
-            # Try keys in order until one works
-            for i in range(1, 5):
-                key = os.environ.get(f"GEMINI_API_KEY_{i}", "")
-                if key.strip():
-                    genai.configure(api_key=key)
-                    self._gemini_model = genai.GenerativeModel("gemini-2.5-flash")
-                    print(f"[JUDGE] Gemini fallback ready (key {i})", flush=True)
-                    break
-        except Exception as e:
-            print(f"[JUDGE] Gemini fallback init failed: {e}", flush=True)
-            self._gemini_model = None
+        # Collect keys at init so we don't re-read env every call
+        self._api_keys = [
+            k for k in [
+                os.environ.get("GEMINI_API_KEY_1", ""),
+                os.environ.get("GEMINI_API_KEY_2", ""),
+                os.environ.get("GEMINI_API_KEY_3", ""),
+                os.environ.get("GEMINI_API_KEY_4", ""),
+            ] if k.strip()
+        ]
+        if self._api_keys:
+            print(f"[JUDGE] Gemini fallback ready ({len(self._api_keys)} key(s))", flush=True)
+        else:
+            print("[JUDGE] ⚠️ No GEMINI_API_KEY_* found for judge fallback", flush=True)
 
     def check_connection(self) -> bool:
         """Check if Ollama is running and accessible."""
@@ -73,7 +63,7 @@ class JudgeHandler:
             print("[JUDGE] Ollama not available — using Gemini fallback.", flush=True)
 
         # --- Gemini fallback ---
-        if self._gemini_model:
+        if self._api_keys:
             return self._judge_with_gemini(prompt)
 
         # --- Both unavailable ---
@@ -126,21 +116,43 @@ class JudgeHandler:
     # ------------------------------------------------------------------
 
     def _judge_with_gemini(self, prompt: str) -> Dict:
-        """Call Gemini as judge fallback."""
+        """Call Gemini as judge. Re-configures genai fresh each call to avoid global state conflicts."""
+        import google.generativeai as genai
         try:
             print("[JUDGE] Sending to Gemini judge...", flush=True)
-            response = self._gemini_model.generate_content(
-                prompt,
-                generation_config={
-                    "temperature": 0.3,
-                    "max_output_tokens": 300,
-                }
-            )
-            judge_output = response.text.strip() if response.text else ""
-            parsed = self._parse_judge_output(judge_output)
-            parsed["_judge"] = "gemini-fallback"
-            print(f"[JUDGE] ✅ Gemini judging complete! Score: {parsed.get('score', 0)}/100", flush=True)
-            return parsed
+
+            # Re-configure genai fresh — chat_handler may have changed the global key
+            for key in self._api_keys:
+                try:
+                    genai.configure(api_key=key)
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    response = model.generate_content(
+                        prompt,
+                        generation_config=genai.GenerationConfig(
+                            temperature=0.3,
+                            max_output_tokens=300,
+                        )
+                    )
+                    if response.text:
+                        judge_output = response.text.strip()
+                        parsed = self._parse_judge_output(judge_output)
+                        parsed["_judge"] = "gemini-fallback"
+                        print(f"[JUDGE] ✅ Gemini judging complete! Score: {parsed.get('score', 0)}/100", flush=True)
+                        return parsed
+                except Exception as key_err:
+                    err_str = str(key_err)
+                    print(f"[JUDGE] Key failed: {err_str[:80]}", flush=True)
+                    if "429" in err_str or "quota" in err_str.lower():
+                        continue  # try next key
+                    else:
+                        raise  # non-quota error, don't rotate
+
+            return {
+                "error": "All Gemini keys exhausted for judge.",
+                "score": 0,
+                "breakdown": {},
+                "reasoning": "All API quota exhausted"
+            }
 
         except Exception as e:
             print(f"[JUDGE] Gemini judge error: {e}", flush=True)
@@ -148,7 +160,7 @@ class JudgeHandler:
                 "error": f"Gemini judge failed: {str(e)[:100]}",
                 "score": 0,
                 "breakdown": {},
-                "reasoning": "Judge error"
+                "reasoning": f"Judge error: {str(e)[:80]}"
             }
 
     # ------------------------------------------------------------------
