@@ -115,7 +115,8 @@ class GeminiHandler:
         return True
 
     def _is_quota_error(self, error_str: str) -> bool:
-        quota_signals = ["429", "quota", "rate", "resource_exhausted", "exhausted"]
+        # Also catch 403/leaked keys to gracefully rotate past disabled keys
+        quota_signals = ["429", "quota", "rate", "resource_exhausted", "exhausted", "403", "leaked", "api key"]
         low = error_str.lower()
         return any(s in low for s in quota_signals)
 

@@ -140,9 +140,9 @@ class JudgeHandler:
                         print(f"[JUDGE] ✅ Gemini judging complete! Score: {parsed.get('score', 0)}/100", flush=True)
                         return parsed
                 except Exception as key_err:
-                    err_str = str(key_err)
-                    print(f"[JUDGE] Key failed: {err_str[:80]}", flush=True)
-                    if "429" in err_str or "quota" in err_str.lower():
+                    err_str = str(key_err).lower()
+                    print(f"[JUDGE] Key failed: {str(key_err)[:80]}", flush=True)
+                    if any(s in err_str for s in ["429", "quota", "rate", "403", "leaked", "api key"]):
                         continue  # try next key
                     else:
                         raise  # non-quota error, don't rotate
